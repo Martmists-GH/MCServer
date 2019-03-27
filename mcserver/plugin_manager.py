@@ -6,7 +6,7 @@ from traceback import print_exc
 
 from quarry.net.protocol import Protocol
 
-from mcserver.utils import read_config
+from rewrite.utils import read_config
 
 
 def plugin(cls):

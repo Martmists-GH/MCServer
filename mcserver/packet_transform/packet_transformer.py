@@ -5,7 +5,7 @@ from mcserver.entities.mob_entity import MobEntity
 from mcserver.entities.painting_entity import PaintingEntity
 from mcserver.entities.player_entity import Player
 from mcserver.server_factory import MCServer
-from mcserver.utils import get_free_id
+from rewrite.utils import get_free_id
 
 
 class PacketTransformer:

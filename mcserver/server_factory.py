@@ -1,11 +1,10 @@
 import logging
-from configparser import ConfigParser
 
 from quarry.data import packets
 from quarry.net.server import ServerFactory
 
 from mcserver.plugin_manager import PluginManager
-from mcserver.utils import DEFAULT_SERVER_PROPERTIES, read_config
+from rewrite.utils import DEFAULT_SERVER_PROPERTIES, read_config
 
 
 class MCServerFactory(ServerFactory):

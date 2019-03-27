@@ -1,5 +1,9 @@
 import inspect
+from copy import deepcopy
 from os.path import dirname, join
+from typing import Union
+
+from quarry.types.buffer import Buffer1_7, Buffer1_13, Buffer1_9
 
 DEFAULT_SERVER_PROPERTIES = {
     'generator-settings': '', 
@@ -41,12 +45,18 @@ DEFAULT_SERVER_PROPERTIES = {
     'motd': 'A Minecraft Server'
 }
 
+AnyBuffer = Union[Buffer1_7, Buffer1_9, Buffer1_13]
+
 
 def get_free_id():
     x = 0
     while True:
         yield x
         x += 1
+
+
+def copy_buffer(buffer: AnyBuffer) -> AnyBuffer:
+    return deepcopy(buffer)
 
 
 def open_local(filename: str):
@@ -60,5 +70,9 @@ def read_config(file):
         line = line.strip()
         if line and not line.startswith("#"):
             k, v = line.split("=", 1)
+            if v.isdecimal():
+                v = int(v)
+            if v in ("true", "false"):
+                v = v == "true"
             data[k] = v
     return data

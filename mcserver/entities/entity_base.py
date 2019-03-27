@@ -3,7 +3,7 @@ from uuid import uuid4
 import numpy as np
 
 from mcserver.messager import Messager
-from mcserver.utils import get_free_id
+from rewrite.utils import get_free_id
 
 
 class Entity:
