@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING
 from quarry.data import packets
 from quarry.types.buffer import buff_types
 
-from rewrite.logger import debug
-from rewrite.utils import copy_buffer
+from mcserver.utils.logger import debug
+from mcserver.utils.misc import copy_buffer
 
 if TYPE_CHECKING:
     from typing import Type
-    from rewrite.utils import AnyBuffer
-    from rewrite.client_connection import ClientConnection
+    from mcserver.utils.misc import AnyBuffer
+    from mcserver.classes.client_connection import ClientConnection
 
 
 class ClientMessage:
@@ -84,10 +84,12 @@ class ClientMessage:
                 self.send_packet(
                     "login_disconnect",
                     self.buffer_type.pack_chat(reason))
-        self.conn.do_loop = False
+
+    def build_packet(self, name: str, data: bytes) -> bytes:
+        combined = self.buffer_type.pack_varint(self.get_packet_ident(name)) + data
+        return self.buffer_type.pack_packet(combined, self.compression_threshold)
 
     def send_packet(self, name: str, data: bytes):
-        combined = self.buffer_type.pack_varint(self.get_packet_ident(name)) + data
         self.conn.send_packet(
-            self.buffer_type.pack_packet(combined, self.compression_threshold)
+            self.build_packet(name, data)
         )

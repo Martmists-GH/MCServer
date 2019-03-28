@@ -1,7 +1,7 @@
 from anyio import create_task_group, create_tcp_server, run
 from quarry.net.crypto import make_keypair, export_public_key
 
-from rewrite.utils import DEFAULT_SERVER_PROPERTIES, read_config
+from mcserver.utils.misc import DEFAULT_SERVER_PROPERTIES, read_config
 
 
 class ServerCore:
@@ -19,7 +19,7 @@ class ServerCore:
 
     @classmethod
     async def start(cls):
-        from rewrite.client_connection import ClientConnection
+        from mcserver.classes.client_connection import ClientConnection
         async with create_task_group() as tg:
             async with await create_tcp_server(cls.options["server-port"], "0.0.0.0") as server:
                 async for client in server.accept_connections():

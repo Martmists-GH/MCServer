@@ -9,24 +9,24 @@ from anyio.exceptions import TLSRequired
 from quarry.net.crypto import Cipher, make_server_id, make_verify_token
 from quarry.types.buffer import BufferUnderrun
 
-from rewrite.client_message import ClientMessage
-from rewrite.event_handler import EventHandler
-from rewrite.logger import warn, debug, error
-from rewrite.packet_handler import PacketHandler
-from rewrite.player_registry import PlayerRegistry
+from mcserver.classes.client_message import ClientMessage
+from mcserver.classes.player import Player
+from mcserver.objects.event_handler import EventHandler
+from mcserver.utils.logger import warn, debug, error
+from mcserver.objects.packet_handler import PacketHandler
+from mcserver.objects.player_registry import PlayerRegistry
 
 if TYPE_CHECKING:
     from typing import List, Dict, Union, Optional
     from anyio import SocketStream, Event
-    from rewrite.utils import AnyBuffer
+    from mcserver.utils.misc import AnyBuffer
 
 
 class ClientConnection:
-    protocol_state = "init"
-
     def __init__(self, client: SocketStream):
         self.client = client
         self.do_loop = True
+        self.protocol_state = "init"
         self.messages: List[bytes] = []
         self._locks: List[
             Dict[str,
@@ -39,10 +39,12 @@ class ClientConnection:
         self.server_id = make_server_id()
         self.verify_token = make_verify_token()
         self.cipher = Cipher()
-
-        self.player = None
         self.display_name = ""
         self.uuid: UUID = None
+
+    @property
+    def player(self) -> Player:
+        return PlayerRegistry.get_player(self.uuid)
 
     def __repr__(self):
         return (f"ClientConnection(loop={self.do_loop}, "
@@ -58,8 +60,12 @@ class ClientConnection:
         data = b""
         async with create_task_group() as tg:
             while self.do_loop:
-                line = await self.client.receive_some(1)
-                if not line:
+                try:
+                    line = await self.client.receive_some(1)
+                except ConnectionError:
+                    line = b""
+
+                if line == b"":
                     try:
                         warn(f"Closing connection to {self.client.server_hostname}")
                     except TLSRequired:
@@ -78,7 +84,7 @@ class ClientConnection:
                     data = b""
 
                 for lock in self._locks:
-                    if lock["event"] == msg.name:
+                    if lock["name"] == msg.name:
                         self._locks.remove(lock)
                         lock["result"] = msg.buffer
                         await lock["lock"].set()
@@ -89,9 +95,12 @@ class ClientConnection:
                 else:
                     await tg.spawn(self.handle_msg, msg)
 
-        if self.protocol_state == "play":
-            # User was logged in
-            PlayerRegistry.players.remove(self)
+            for lock in self._locks:
+                await lock["lock"].set()
+            if self.protocol_state == "play":
+                # User was logged in
+                debug("Player left, removing from game...")
+                PlayerRegistry.players.remove(self.player)
 
     async def handle_msg(self, msg: ClientMessage):
         try:

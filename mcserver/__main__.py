@@ -1,6 +1,4 @@
-from twisted.internet import reactor
+from mcserver.objects.server_core import ServerCore
 
-from mcserver.server_factory import MCServer
-
-MCServer.start()
-reactor.run()
+server = ServerCore()
+server.run()
