@@ -1,10 +1,14 @@
+# Future patches
 from __future__ import annotations
 
+# Stdlib
 from typing import TYPE_CHECKING
 
+# External Libraries
 from quarry.data import packets
 from quarry.types.buffer import buff_types
 
+# MCServer
 from mcserver.utils.logger import debug
 from mcserver.utils.misc import copy_buffer
 
@@ -69,9 +73,10 @@ class ClientMessage:
         for ver, cls in reversed(buff_types):
             if self.protocol_version >= ver:
                 return cls
+        raise Exception("Invalid protocol version")
 
     def _new_buffer(self, data: bytes = None) -> AnyBuffer:
-        return self.buffer_type(data)
+        return self.buffer_type(data)  # pylint: disable=not-callable
 
     def close_connection(self, reason: str = None):
         debug(f"Closing connection with reason: {reason}")

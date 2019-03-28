@@ -1,13 +1,14 @@
+# Future patches
 from __future__ import annotations
 
+# Stdlib
 from typing import TYPE_CHECKING
 
+# MCServer
 from mcserver.game.entities.player import EntityPlayer
 
 if TYPE_CHECKING:
-    from typing import Type
     from mcserver.classes.client_connection import ClientConnection
-    from mcserver.utils.misc import AnyBuffer
 
 
 class Player:
@@ -26,9 +27,6 @@ class Player:
         # Load from file
         # Load from API
         pass
-
-    def pack_properties(self, buffer_type: Type[AnyBuffer]) -> bytes:
-        return b""
 
     @property
     def display_name(self):

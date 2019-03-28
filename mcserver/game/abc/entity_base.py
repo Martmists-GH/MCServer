@@ -1,9 +1,11 @@
+# Stdlib
 from abc import ABC
-from typing import Type
 
+# External Libraries
 import numpy as np
 
-from mcserver.utils.misc import get_free_id, AnyBuffer
+# MCServer
+from mcserver.utils.misc import get_free_id
 
 
 class Spawnable(ABC):
@@ -22,12 +24,3 @@ class EntityBase(Spawnable):
 
     def __repr__(self):
         return f"{self.__class__.__name__}(position={self.position}, rotation={self.rotation})"
-
-    def pack_metadata(self, buffer_type: Type[AnyBuffer]) -> bytes:
-        total = b""
-
-        # TODO:
-        # Do everything
-
-        total += b"\xff"
-        return total

@@ -1,10 +1,14 @@
+# Future patches
 from __future__ import annotations
 
+# Stdlib
 import random
 from typing import TYPE_CHECKING
 
+# External Libraries
 import anyio
 
+# MCServer
 from mcserver.classes.player import Player
 from mcserver.objects.packet_handler import PacketHandler
 from mcserver.objects.player_registry import PlayerRegistry
@@ -29,13 +33,14 @@ class EventHandler:
     def handle_event(cls, msg: ClientMessage, args: Tuple[Any]):
         event = _remap_name(msg.name)
         if event:
-            func = getattr(cls, "event_"+event, lambda *_: error(f"Unhandled event: {event}"))
+            func = getattr(cls, "event_" + event,
+                           lambda *_: error(f"Unhandled event: {event}"))
             if args:
                 if not isinstance(args, tuple):
                     args = (args, )
                 return func(msg, *args)
-            else:
-                return func(msg)
+            return func(msg)
+        return None
 
     @classmethod
     async def event_chat_message(cls, msg: ClientMessage, message: str):

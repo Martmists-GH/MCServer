@@ -1,24 +1,28 @@
+# Future patches
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+# Stdlib
 from traceback import format_exc
+from typing import TYPE_CHECKING
 from uuid import UUID
 
-from anyio import create_task_group, sleep, create_event
+# External Libraries
+from anyio import sleep, create_event, create_task_group
 from anyio.exceptions import TLSRequired
 from quarry.net.crypto import Cipher, make_server_id, make_verify_token
 from quarry.types.buffer import BufferUnderrun
 
+# MCServer
 from mcserver.classes.client_message import ClientMessage
-from mcserver.classes.player import Player
 from mcserver.objects.event_handler import EventHandler
-from mcserver.utils.logger import warn, debug, error
 from mcserver.objects.packet_handler import PacketHandler
 from mcserver.objects.player_registry import PlayerRegistry
+from mcserver.utils.logger import warn, debug, error
 
 if TYPE_CHECKING:
     from typing import List, Dict, Union, Optional
     from anyio import SocketStream, Event
+    from mcserver.classes.player import Player
     from mcserver.utils.misc import AnyBuffer
 
 
@@ -110,7 +114,7 @@ class ClientConnection:
                 coro2 = EventHandler.handle_event(msg, args)
                 if coro2:
                     await coro2
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             error(f"Exception occurred:\n{format_exc()}")
 
     async def write_loop(self):

@@ -1,8 +1,11 @@
+# Future patches
 from __future__ import annotations
 
+# Stdlib
 from typing import TYPE_CHECKING, List
 from uuid import UUID
 
+# MCServer
 from mcserver.classes.player import Player
 
 if TYPE_CHECKING:

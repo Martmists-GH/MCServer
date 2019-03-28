@@ -1,6 +1,8 @@
-from anyio import create_task_group, create_tcp_server, run
+# External Libraries
+from anyio import run, create_task_group, create_tcp_server
 from quarry.net.crypto import make_keypair, export_public_key
 
+# MCServer
 from mcserver.utils.misc import DEFAULT_SERVER_PROPERTIES, read_config
 
 

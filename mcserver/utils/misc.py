@@ -1,47 +1,49 @@
-import inspect
+# Stdlib
 from copy import deepcopy
-from os.path import dirname, join
+import inspect
+from os.path import join, dirname
 from typing import Union
 
-from quarry.types.buffer import Buffer1_7, Buffer1_13, Buffer1_9
+# External Libraries
+from quarry.types.buffer import Buffer1_7, Buffer1_9, Buffer1_13
 
 DEFAULT_SERVER_PROPERTIES = {
-    'generator-settings': '', 
-    'force-gamemode': False, 
+    'generator-settings': '',
+    'force-gamemode': False,
     'allow-nether': True,
-    'enforce-whitelist': False, 
-    'gamemode': 0, 
+    'enforce-whitelist': False,
+    'gamemode': 0,
     'broadcast-console-to-ops': True,
-    'enable-query': False, 
-    'player-idle-timeout': 0, 
+    'enable-query': False,
+    'player-idle-timeout': 0,
     'difficulty': 1,
-    'spawn-monsters': True, 
-    'op-permission-level': 4, 
+    'spawn-monsters': True,
+    'op-permission-level': 4,
     'pvp': True,
-    'snooper-enabled': True, 
-    'level-type': 'DEFAULT', 
+    'snooper-enabled': True,
+    'level-type': 'DEFAULT',
     'hardcore': False,
-    'enable-command-block': False, 
+    'enable-command-block': False,
     'max-players': 20,
-    'network-compression-threshold': 256, 
+    'network-compression-threshold': 256,
     'resource-pack-sha1': '',
-    'max-world-size': 29999984, 
-    'server-port': 25565, 
+    'max-world-size': 29999984,
+    'server-port': 25565,
     'server-ip': '',
-    'spawn-npcs': True, 
-    'allow-flight': False, 
+    'spawn-npcs': True,
+    'allow-flight': False,
     'level-name': 'world',
-    'view-distance': 10, 
-    'resource-pack': '', 
-    'spawn-animals': True, 
+    'view-distance': 10,
+    'resource-pack': '',
+    'spawn-animals': True,
     'white-list': False,
-    'generate-structures': True, 
-    'online-mode': True, 
+    'generate-structures': True,
+    'online-mode': True,
     'max-build-height': 256,
-    'level-seed': '', 
-    'prevent-proxy-connections': False, 
+    'level-seed': '',
+    'prevent-proxy-connections': False,
     'use-native-transport': True,
-    'enable-rcon': False, 
+    'enable-rcon': False,
     'motd': 'A Minecraft Server'
 }
 

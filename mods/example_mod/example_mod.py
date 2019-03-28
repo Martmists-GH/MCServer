@@ -1,7 +1,9 @@
 # TODO: Fix mods/plugins
 
+# External Libraries
 from quarry.net.protocol import Protocol
 
+# MCServer
 from mcserver.plugin_manager import plugin
 from mcserver.utils.misc import open_local, read_config
 

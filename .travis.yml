@@ -1,0 +1,21 @@
+language: python
+
+dist: xenial
+
+python:
+  - "3.6"
+  - "3.7"
+
+install:
+  - pip install -U -r requirements-ci.txt -r requirements.txt
+
+script:
+  - snekchek
+  # - python setup.py install
+  # - pytest -c .snekrc tests/*
+
+cache:
+  - pip
+
+notifications:
+  email: false

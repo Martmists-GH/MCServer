@@ -1,6 +1,10 @@
+# Future patches
 from __future__ import annotations
 
+# Stdlib
 from typing import TYPE_CHECKING
+
+# MCServer
 from mcserver.game.abc.entity_base import EntityBase
 
 if TYPE_CHECKING:

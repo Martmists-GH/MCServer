@@ -1,19 +1,23 @@
+# Future patches
 from __future__ import annotations
 
+# Stdlib
 import random
-import numpy as np
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+# External Libraries
 from aiohttp import ClientSession
+import numpy as np
 from quarry.data import packets
-from quarry.net.crypto import decrypt_secret, make_digest
+from quarry.net.crypto import make_digest, decrypt_secret
 from quarry.net.protocol import protocol_modes
 
+# MCServer
 from mcserver.classes.player import Player
-from mcserver.utils.logger import error, debug
 from mcserver.objects.player_registry import PlayerRegistry
 from mcserver.objects.server_core import ServerCore
+from mcserver.utils.logger import debug, error
 
 if TYPE_CHECKING:
     from mcserver.classes.client_message import ClientMessage
@@ -77,7 +81,6 @@ class PacketHandler:
     def decode_plugin_message(cls, msg: ClientMessage):
         buf = msg.buffer
         channel = buf.unpack_string()
-        pass
 
     @classmethod
     async def decode_handshake(cls, msg: ClientMessage):
@@ -189,11 +192,6 @@ class PacketHandler:
         return PlayerRegistry.add_player(msg.conn)
 
     @classmethod
-    async def packet_teleport_confirm(cls, msg: ClientMessage):
-        if msg.conn.player._cache["TID"] != msg.buffer.unpack_varint():
-            msg.close_connection("Player couldn't confirm Teleport ID")
-
-    @classmethod
     async def packet_chat_message(cls, msg: ClientMessage):
         message = msg.buffer.unpack_string()
         packet = msg.build_packet("chat_message", msg.buffer_type.pack_chat(message))
@@ -263,7 +261,7 @@ class PacketHandler:
                 player.uuid.bytes +
                 msg.buffer_type.pack("ddd", *player.entity.position) +
                 msg.buffer_type.pack("ff", *player.entity.rotation) +
-                player.entity.pack_metadata(msg.buffer_type)
+                msg.buffer_type.pack_entity_metadata(player.entity.metadata)
             )
         )
 
