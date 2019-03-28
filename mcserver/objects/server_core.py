@@ -1,5 +1,8 @@
+from typing import List
+
 # External Libraries
 from anyio import run, create_task_group, create_tcp_server
+from quarry.data import packets
 from quarry.net.crypto import make_keypair, export_public_key
 
 # MCServer
@@ -16,8 +19,18 @@ class ServerCore:
     keypair = make_keypair()
     pubkey = export_public_key(keypair)
     minecraft_versions = [
-        "1.12.2"
+        "1.7",
+        "1.8",
+        "1.9",
+        "1.10",
+        "1.11",
+        "1.12",
+        "1.13"
     ]
+
+    @classmethod
+    def supported_protocols(cls) -> List[int]:
+        return [k for k, v in packets.minecraft_versions.items() if any(v.startswith(ver) for ver in cls.minecraft_versions)]
 
     @classmethod
     async def start(cls):
@@ -31,4 +44,7 @@ class ServerCore:
 
     @classmethod
     def run(cls):
-        run(cls.start, backend="asyncio")
+        try:
+            run(cls.start, backend="asyncio")
+        except KeyboardInterrupt:
+            pass

@@ -9,6 +9,7 @@ from quarry.data import packets
 from quarry.types.buffer import buff_types
 
 # MCServer
+from mcserver.objects.server_core import ServerCore
 from mcserver.utils.logger import debug
 from mcserver.utils.misc import copy_buffer
 
@@ -17,6 +18,10 @@ if TYPE_CHECKING:
     from mcserver.utils.misc import AnyBuffer
     from mcserver.classes.client_connection import ClientConnection
 
+
+# TODO:
+# Either offload a bunch of stuff from ClientMessage to ClientConnection
+# or merge the two in a good way
 
 class ClientMessage:
     """
@@ -37,24 +42,24 @@ class ClientMessage:
     401 -> 1.13.1
     404 -> 1.13.2
     """
-    protocol_version = packets.default_protocol_version
     recv_direction = "upstream"
     send_direction = "downstream"
     compression_threshold = -1
 
-    def __init__(self, connection: ClientConnection, data: bytes):
+    def __init__(self, connection: ClientConnection, data: bytes, protocol_version: int):
+        self.protocol_version = protocol_version
         self.conn = connection
         decrypted = self._new_buffer(data)
         self._buffer: AnyBuffer = decrypted.unpack_packet(self.buffer_type, self.compression_threshold)
-        self.old_len = len(decrypted.read())
+        self.old_len = decrypted.pos
         self.name = self.get_packet_name(self._buffer.unpack_varint())
 
     def __repr__(self):
         return f"ClientMessage(event={self.name}, data={self.buffer.read()})"
 
     def set_protocol_version(self, version: int):
-        if self.protocol_version == packets.default_protocol_version:
-            ClientMessage.protocol_version = version
+        if self.protocol_version == packets.default_protocol_version and version in ServerCore.supported_protocols():
+            self.conn.protocol_version = version
 
     @property
     def buffer(self) -> AnyBuffer:

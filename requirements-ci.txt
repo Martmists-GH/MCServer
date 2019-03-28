@@ -1,0 +1,4 @@
+https://github.com/izunadevs/snekchek/archive/master.zip
+isort
+flake8
+pylint

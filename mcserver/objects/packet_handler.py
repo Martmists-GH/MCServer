@@ -53,7 +53,7 @@ class PacketHandler:
         debug(f"Handling packet: {msg}")
         func = getattr(cls,
                        "decode_" + msg.name,
-                       lambda _, err=f"Unhandled packet type: {msg.name}": error(err) or msg.close_connection(err))
+                       lambda _, err=f"Unhandled packet type: {msg.name}": error(err))
         return func(msg)
 
     @classmethod

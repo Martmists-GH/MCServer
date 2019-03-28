@@ -9,6 +9,7 @@ from uuid import UUID
 # External Libraries
 from anyio import sleep, create_event, create_task_group
 from anyio.exceptions import TLSRequired
+from quarry.data import packets
 from quarry.net.crypto import Cipher, make_server_id, make_verify_token
 from quarry.types.buffer import BufferUnderrun
 
@@ -31,6 +32,7 @@ class ClientConnection:
         self.client = client
         self.do_loop = True
         self.protocol_state = "init"
+        self.protocol_version = packets.default_protocol_version
         self.messages: List[bytes] = []
         self._locks: List[
             Dict[str,
@@ -62,30 +64,35 @@ class ClientConnection:
 
     async def serve_loop(self):
         data = b""
+        run_again = False
         async with create_task_group() as tg:
             while self.do_loop:
-                try:
-                    line = await self.client.receive_some(1)
-                except ConnectionError:
-                    line = b""
-
-                if line == b"":
+                if not run_again:
                     try:
-                        warn(f"Closing connection to {self.client.server_hostname}")
-                    except TLSRequired:
-                        pass
+                        line = await self.client.receive_some(1024)
+                    except ConnectionError:
+                        line = b""
 
-                    self.do_loop = False
-                    break
+                    if line == b"":
+                        try:
+                            warn(f"Closing connection to {self.client.server_hostname}")
+                        except TLSRequired:
+                            pass
 
-                data += self.cipher.decrypt(line)
+                        self.do_loop = False
+                        break
+
+                    data += self.cipher.decrypt(line)
 
                 try:
-                    msg = ClientMessage(self, data)
+                    msg = ClientMessage(self, data, self.protocol_version)
                 except BufferUnderrun:
+                    run_again = False
                     continue
                 else:
-                    data = b""
+                    data = data[msg.old_len:]
+                    if data != b"":
+                        run_again = True
 
                 for lock in self._locks:
                     if lock["name"] == msg.name:
@@ -104,6 +111,9 @@ class ClientConnection:
             if self.protocol_state == "play":
                 # User was logged in
                 debug("Player left, removing from game...")
+                # TODO: Fix EventHandler
+                # Requires: client_message.py:22
+                # EventHandler.event_player_leave(self.player)
                 PlayerRegistry.players.remove(self.player)
 
     async def handle_msg(self, msg: ClientMessage):
