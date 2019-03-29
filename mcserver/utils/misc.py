@@ -1,7 +1,8 @@
 # Stdlib
+from base64 import b64encode
 from copy import deepcopy
 import inspect
-from os.path import join, dirname
+from os.path import join, isfile, dirname
 from typing import Union
 
 # External Libraries
@@ -44,7 +45,7 @@ DEFAULT_SERVER_PROPERTIES = {
     'prevent-proxy-connections': False,
     'use-native-transport': True,
     'enable-rcon': False,
-    'motd': 'A Minecraft Server'
+    'motd': 'A Minecraft Server',
 }
 
 AnyBuffer = Union[Buffer1_7, Buffer1_9, Buffer1_13]
@@ -65,7 +66,15 @@ def open_local(filename: str):
     dir_name = dirname(inspect.stack()[1].filename)
     return open(join(dir_name, filename))
 
-
+def read_favicon() -> str:
+    if not isfile('server.icon'):
+        return False
+        
+    with open('server.icon', "rb") as f:
+        content = b64encode(f.read())
+    
+    return content.decode()
+    
 def read_config(file):
     data = {}
     for line in file.readlines():
