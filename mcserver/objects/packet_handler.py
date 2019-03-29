@@ -18,6 +18,7 @@ from mcserver.classes.player import Player
 from mcserver.objects.player_registry import PlayerRegistry
 from mcserver.objects.server_core import ServerCore
 from mcserver.utils.logger import debug, error
+from mcserver.utils.misc import read_favicon
 
 if TYPE_CHECKING:
     from mcserver.classes.client_message import ClientMessage
@@ -120,8 +121,11 @@ class PacketHandler:
                 "protocol": msg.protocol_version
             }
         }
-        # TODO: Server icon
+        favicon = read_favicon()
+        if favicon:
+            d["favicon"] = f"data:image/png;base64,{favicon}"
 
+        
         msg.send_packet(
             "status_response",
             msg.buffer_type.pack_json(d)
@@ -187,7 +191,7 @@ class PacketHandler:
             async with session.get(url, timeout=ServerCore.auth_timeout) as resp:
                 data = await resp.json()
                 msg.conn.uuid = UUID(data["id"])
-
+                
         cls.update_protocol(msg, "play")
         return PlayerRegistry.add_player(msg.conn)
 
