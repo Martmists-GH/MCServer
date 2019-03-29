@@ -45,7 +45,7 @@ DEFAULT_SERVER_PROPERTIES = {
     'prevent-proxy-connections': False,
     'use-native-transport': True,
     'enable-rcon': False,
-    'motd': 'A Minecraft Server',
+    'motd': 'A Minecraft Server'
 }
 
 AnyBuffer = Union[Buffer1_7, Buffer1_9, Buffer1_13]
@@ -69,7 +69,7 @@ def open_local(filename: str):
 def read_favicon() -> Optional[str]:
     if not isfile('server.icon'):
         return None
-        
+
     with open('server.icon', "rb") as f:
         content = b64encode(f.read())
     
