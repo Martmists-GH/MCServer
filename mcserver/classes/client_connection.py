@@ -10,13 +10,13 @@ from uuid import UUID
 from anyio import sleep, create_event, create_task_group
 from anyio.exceptions import TLSRequired
 from quarry.data import packets
-from quarry.net.crypto import Cipher, make_server_id, make_verify_token
 
 # MCServer
 from mcserver.classes.packet_decoder import PacketDecoder, IncompletePacket
 from mcserver.classes.packet_encoder import PacketEncoder
 from mcserver.objects.event_handler import EventHandler
 from mcserver.objects.player_registry import PlayerRegistry
+from mcserver.utils.cryptography import make_server_id, make_verify_token, Cipher
 from mcserver.utils.logger import warn, debug, error
 
 if TYPE_CHECKING:

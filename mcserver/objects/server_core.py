@@ -4,9 +4,9 @@ from typing import List
 # External Libraries
 from anyio import run, create_task_group, create_tcp_server
 from quarry.data import packets
-from quarry.net.crypto import make_keypair, export_public_key
 
 # MCServer
+from mcserver.utils.cryptography import export_public_key, make_keypair
 from mcserver.utils.misc import DEFAULT_SERVER_PROPERTIES, read_config
 
 
