@@ -11,6 +11,8 @@ from mcserver.utils.misc import DEFAULT_SERVER_PROPERTIES, read_config
 
 
 class ServerCore:
+    # TODO:
+    # Refactor auth in a different object
     auth_timeout = 30
     options = DEFAULT_SERVER_PROPERTIES
     with open("server.properties") as fp:

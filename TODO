@@ -1,0 +1,43 @@
+mods/example_mod/example_mod.py:1:# TODO: Fix mods/plugins
+mods/example_mod/example_mod.py-2-
+mods/example_mod/example_mod.py-3-# External Libraries
+--
+mcserver/classes/player.py-23-
+mcserver/classes/player.py-24-    async def load(self):
+mcserver/classes/player.py:25:        # TODO:
+mcserver/classes/player.py-26-        # Load from file
+mcserver/classes/player.py-27-        # Load from API
+--
+mcserver/classes/client_connection.py-29-class ClientConnection:
+mcserver/classes/client_connection.py-30-    def __init__(self, client: SocketStream):
+mcserver/classes/client_connection.py:31:        # TODO:
+mcserver/classes/client_connection.py-32-        # Refactor this class properties to delegate as much as possible to a different class
+mcserver/classes/client_connection.py-33-        # This class should only handle incoming/outgoing data and triggering events
+--
+mcserver/classes/client_connection.py-58-    @property
+mcserver/classes/client_connection.py-59-    def packet_decoder(self):
+mcserver/classes/client_connection.py:60:        # TODO: Implement class
+mcserver/classes/client_connection.py-61-        return PacketDecoder(self.protocol_version)
+mcserver/classes/client_connection.py-62-
+mcserver/classes/client_connection.py-63-    @property
+mcserver/classes/client_connection.py-64-    def packet_encoder(self):
+mcserver/classes/client_connection.py:65:        # TODO: Implement class
+mcserver/classes/client_connection.py-66-        return PacketEncoder(self.protocol_version)
+mcserver/classes/client_connection.py-67-
+--
+mcserver/classes/client_connection.py-125-                # User was logged in
+mcserver/classes/client_connection.py-126-                debug("Player left, removing from game...")
+mcserver/classes/client_connection.py:127:                await EventHandler.handle_event(MCEvent("player_leave", self.player))  # TODO: Use PlayerLeaveEvent
+mcserver/classes/client_connection.py-128-                PlayerRegistry.players.remove(self.player)
+mcserver/classes/client_connection.py-129-
+--
+mcserver/objects/event_handler.py-51-            await listener(*evt.args)
+mcserver/objects/event_handler.py-52-
+mcserver/objects/event_handler.py:53:    # TODO:
+mcserver/objects/event_handler.py-54-    # Implement all events
+--
+mcserver/objects/server_core.py-12-
+mcserver/objects/server_core.py-13-class ServerCore:
+mcserver/objects/server_core.py:14:    # TODO:
+mcserver/objects/server_core.py-15-    # Refactor auth in a different object
+mcserver/objects/server_core.py-16-    auth_timeout = 30

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 # Stdlib
 from traceback import format_exc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Tuple
 from uuid import UUID
 
 # External Libraries
@@ -11,24 +11,26 @@ from anyio import sleep, create_event, create_task_group
 from anyio.exceptions import TLSRequired
 from quarry.data import packets
 from quarry.net.crypto import Cipher, make_server_id, make_verify_token
-from quarry.types.buffer import BufferUnderrun
 
 # MCServer
-from mcserver.classes.client_message import ClientMessage
+from mcserver.classes.packet_decoder import PacketDecoder, IncompletePacket
+from mcserver.classes.packet_encoder import PacketEncoder
 from mcserver.objects.event_handler import EventHandler
-from mcserver.objects.packet_handler import PacketHandler
 from mcserver.objects.player_registry import PlayerRegistry
 from mcserver.utils.logger import warn, debug, error
 
 if TYPE_CHECKING:
     from typing import List, Dict, Union, Optional
     from anyio import SocketStream, Event
+    from mcserver.events.event_base import Event as MCEvent
     from mcserver.classes.player import Player
-    from mcserver.utils.misc import AnyBuffer
 
 
 class ClientConnection:
     def __init__(self, client: SocketStream):
+        # TODO:
+        # Refactor this class properties to delegate as much as possible to a different class
+        # This class should only handle incoming/outgoing data and triggering events
         self.client = client
         self.do_loop = True
         self.protocol_state = "init"
@@ -39,18 +41,29 @@ class ClientConnection:
                  Union[
                      str,
                      Event,
-                     Optional[AnyBuffer]
+                     Optional[MCEvent]
                  ]]
         ] = []
         self.server_id = make_server_id()
         self.verify_token = make_verify_token()
         self.cipher = Cipher()
-        self.display_name = ""
+
+        self.name = ""
         self.uuid: UUID = None
 
     @property
     def player(self) -> Player:
         return PlayerRegistry.get_player(self.uuid)
+
+    @property
+    def packet_decoder(self):
+        # TODO: Implement class
+        return PacketDecoder(self.protocol_version)
+
+    @property
+    def packet_encoder(self):
+        # TODO: Implement class
+        return PacketEncoder(self.protocol_version)
 
     def __repr__(self):
         return (f"ClientConnection(loop={self.do_loop}, "
@@ -85,45 +98,38 @@ class ClientConnection:
                     data += self.cipher.decrypt(line)
 
                 try:
-                    msg = ClientMessage(self, data, self.protocol_version)
-                except BufferUnderrun:
+                    rest_bytes, event = self.packet_decoder.decode(data)
+                except IncompletePacket:
                     run_again = False
                     continue
                 else:
-                    data = data[msg.old_len:]
+                    data = rest_bytes
                     if data != b"":
                         run_again = True
 
                 for lock in self._locks:
-                    if lock["name"] == msg.name:
+                    if lock["name"] == event.event:
                         self._locks.remove(lock)
-                        lock["result"] = msg.buffer
+                        lock["result"] = event
                         await lock["lock"].set()
                         break
 
-                if msg.name == "handshake":
-                    await self.handle_msg(msg)
+                if event.event == "handshake":
+                    await self.handle_msg(event)
                 else:
-                    await tg.spawn(self.handle_msg, msg)
+                    tg.spawn(self.handle_msg, event)
 
             for lock in self._locks:
                 await lock["lock"].set()
             if self.protocol_state == "play":
                 # User was logged in
                 debug("Player left, removing from game...")
-                # TODO: Fix EventHandler
-                # Requires: client_message.py:22
-                # EventHandler.event_player_leave(self.player)
+                await EventHandler.handle_event(MCEvent("player_leave", self.player))  # TODO: Use PlayerLeaveEvent
                 PlayerRegistry.players.remove(self.player)
 
-    async def handle_msg(self, msg: ClientMessage):
+    async def handle_msg(self, event: MCEvent):
         try:
-            coro = PacketHandler.decode(msg)
-            if coro:
-                args = await coro
-                coro2 = EventHandler.handle_event(msg, args)
-                if coro2:
-                    await coro2
+            await EventHandler.handle_event(event)
         except Exception:  # pylint: disable=broad-except
             error(f"Exception occurred:\n{format_exc()}")
 
@@ -136,7 +142,7 @@ class ClientConnection:
             else:
                 await sleep(0.00001)  # Allow other tasks to run
 
-    async def wait_for_packet(self, packet_name: str) -> AnyBuffer:
+    async def wait_for_packet(self, packet_name: str) -> Event:
         lock = {
             "name": packet_name,
             "lock": create_event(),
@@ -146,8 +152,7 @@ class ClientConnection:
         self._locks.append(lock)
         await lock["lock"].wait()
 
-        res: AnyBuffer = lock["result"]
-        return res
+        return lock["result"]
 
     def send_packet(self, packet: bytes):
         self.messages.append(self.cipher.encrypt(packet))

@@ -1,12 +1,8 @@
 # Stdlib
 from base64 import b64encode
-from copy import deepcopy
 import inspect
 from os.path import join, isfile, dirname
-from typing import Union, Optional
-
-# External Libraries
-from quarry.types.buffer import Buffer1_7, Buffer1_9, Buffer1_13
+from typing import Optional
 
 DEFAULT_SERVER_PROPERTIES = {
     'generator-settings': '',
@@ -48,8 +44,6 @@ DEFAULT_SERVER_PROPERTIES = {
     'motd': 'A Minecraft Server'
 }
 
-AnyBuffer = Union[Buffer1_7, Buffer1_9, Buffer1_13]
-
 
 def get_free_id():
     x = 0
@@ -58,13 +52,10 @@ def get_free_id():
         x += 1
 
 
-def copy_buffer(buffer: AnyBuffer) -> AnyBuffer:
-    return deepcopy(buffer)
-
-
 def open_local(filename: str):
     dir_name = dirname(inspect.stack()[1].filename)
     return open(join(dir_name, filename))
+
 
 def read_favicon() -> Optional[str]:
     if not isfile('server.icon'):
@@ -74,7 +65,8 @@ def read_favicon() -> Optional[str]:
         content = b64encode(f.read())
     
     return content.decode()
-    
+
+
 def read_config(file):
     data = {}
     for line in file.readlines():

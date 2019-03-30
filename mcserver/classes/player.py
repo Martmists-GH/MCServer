@@ -16,8 +16,7 @@ class Player:
         self.conn = conn
         self.entity = EntityPlayer()
         self.uuid = self.entity.uuid = conn.uuid
-        self.name = self.entity.name = conn.display_name
-        self.entity.display_name = conn.display_name
+        self.name = self.entity.name = conn.name
 
         self.ping = 0
         self.properties = {}
