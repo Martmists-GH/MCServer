@@ -1,17 +1,14 @@
 # TODO: Fix mods/plugins
-
-# External Libraries
-from quarry.net.protocol import Protocol
-
-# MCServer
-from mcserver.plugin_manager import plugin
-from mcserver.utils.misc import open_local, read_config
+from mcserver.objects.plugin_manager import mod, Dependency
 
 
-@plugin
+@mod("example.dependent", "1.12.2", "0.0.1", [Dependency("example.mod", "0.0.0")])
+class ExampleDependent:
+    def __init__(self):
+        print("This will run second")
+
+
+@mod("example.mod", "1.12.2", "0.0.1")
 class ExampleMod:
-    def event_client_settings(self, player: Protocol, buffer):
-        with open_local("settings.cfg") as fp:
-            config = read_config(fp)
-            if config["do_log_client_info"]:
-                print(player.display_name, buffer.read())
+    def __init__(self):
+        print("This will run first")

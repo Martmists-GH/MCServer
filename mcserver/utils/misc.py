@@ -2,7 +2,7 @@
 from base64 import b64encode
 import inspect
 from os.path import join, isfile, dirname
-from typing import Optional
+from typing import Optional, Tuple
 
 DEFAULT_SERVER_PROPERTIES = {
     'generator-settings': '',
@@ -79,3 +79,7 @@ def read_config(file):
                 v = v == "true"
             data[k] = v
     return data
+
+
+def map_version(version: str) -> Tuple:
+    return tuple(map(int, version.split(".")))
