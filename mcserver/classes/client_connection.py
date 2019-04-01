@@ -12,8 +12,8 @@ from anyio.exceptions import TLSRequired
 from quarry.data import packets
 
 # MCServer
-from mcserver.classes.packet_decoder import PacketDecoder, IncompletePacket
-from mcserver.classes.packet_encoder import PacketEncoder
+from mcserver.classes.packet_decoder import PacketDecoder
+# from mcserver.classes.packet_encoder import PacketEncoder
 from mcserver.objects.event_handler import EventHandler
 from mcserver.objects.player_registry import PlayerRegistry
 from mcserver.utils.cryptography import make_server_id, make_verify_token, Cipher
@@ -35,6 +35,7 @@ class ClientConnection:
         self.do_loop = True
         self.protocol_state = "init"
         self.protocol_version = packets.default_protocol_version
+        self.packet_decoder = PacketDecoder(self.protocol_version, 0)
         self.messages: List[bytes] = []
         self._locks: List[
             Dict[str,
@@ -54,11 +55,6 @@ class ClientConnection:
     @property
     def player(self) -> Player:
         return PlayerRegistry.get_player(self.uuid)
-
-    @property
-    def packet_decoder(self):
-        # TODO: Implement class
-        return PacketDecoder(self.protocol_version)
 
     @property
     def packet_encoder(self):
@@ -99,13 +95,15 @@ class ClientConnection:
 
                 try:
                     rest_bytes, event = self.packet_decoder.decode(data)
-                except IncompletePacket:
+                except AssertionError:
                     run_again = False
                     continue
                 else:
                     data = rest_bytes
                     if data != b"":
                         run_again = True
+
+                print(event)
 
                 for lock in self._locks:
                     if lock["name"] == event.event:

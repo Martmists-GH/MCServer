@@ -47,9 +47,17 @@ class EventHandler:
     async def handle_event(cls, evt: Event):
         _event = f"event_{evt.event}"
         func = getattr(cls, _event)
-        await func(*evt.args)
+        await func(evt)
         for listener in cls.listeners[_event]:
-            await listener(*evt.args)
+            await listener(evt)
 
     # TODO:
     # Implement all events
+    @classmethod
+    async def event_handshake(cls, evt: Event):
+        pass
+
+    @classmethod
+    async def event_status(cls, evt: Event):
+        # evt._conn.send_packet("status", {...})
+        pass
