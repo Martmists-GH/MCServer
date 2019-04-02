@@ -2,6 +2,8 @@ import io
 import json
 import struct
 
+from mcserver.objects.server_core import ServerCore
+
 
 class PacketEncoder:
     def __init__(self, protocol: int):
@@ -33,9 +35,12 @@ class PacketEncoder:
             pack_twos_comp(12, y) << 26,
             pack_twos_comp(26, z))))
 
-    def write_string(self, text: str):
-        self.write_varint(len(text))
-        self.buffer.write(text.encode())
+    def write_bytes(self, data: bytes):
+        self.write_varint(len(data))
+        self.buffer.write(data)
+
+    def write_string(self, text: str, encoding="utf-8"):
+        self.write_bytes(text.encode(encoding))
 
     def write_json(self, data: dict):
         self.write_string(json.dumps(data))
@@ -47,6 +52,10 @@ class PacketEncoder:
             self.encode_status(*args)
         elif packet_id == "pong":
             self.encode_pong(*args)
+        elif packet_id == "encryption_start":
+            self.encode_encryption_start(*args)
+        else:
+            raise
 
         self.buffer.seek(0)
         data = self.buffer.read()
@@ -64,3 +73,9 @@ class PacketEncoder:
     def encode_pong(self, arg: int):
         self.write_varint(1)  # `pong` code
         self.write("q", arg)
+
+    def encode_encryption_start(self, server_id: str, verify_token: bytes):
+        self.write_varint(1)  # `encryption_start` code
+        self.write_string(server_id)
+        self.write_bytes(ServerCore.pubkey)
+        self.write_bytes(verify_token)

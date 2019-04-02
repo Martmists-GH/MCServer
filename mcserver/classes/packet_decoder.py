@@ -1,7 +1,11 @@
 import io
 import struct
 
-from mcserver.events.event_base import Event
+from mcserver.events.init import HandshakeEvent
+from mcserver.events.login import ConfirmEncryptionEvent, LoginStartEvent
+from mcserver.events.status import PingEvent, StatusEvent, Connect16Event
+from mcserver.objects.server_core import ServerCore
+from mcserver.utils.cryptography import decrypt_secret
 from mcserver.utils.logger import debug
 
 
@@ -62,15 +66,19 @@ class PacketDecoder:
         self.buffer.seek(pos)
 
         packet_id = self.read_varint()
-        debug(f"Packet identifier: {packet_id}")
+        # debug(f"Packet identifier: {packet_id}")
         if packet_id == 0:
             if self.status == 0:
                 data = self.decode_handshake()
             elif self.status == 1:
                 data = self.decode_status()
+            elif self.status == 2:
+                data = self.decode_start_login()
         elif packet_id == 1:
             if self.status == 1:
                 data = self.decode_ping()
+            elif self.status == 2:
+                data = self.decode_encryption()
 
         try:
             data
@@ -95,17 +103,31 @@ class PacketDecoder:
         len_host = self.read("h") * 2
         hostname = self.buffer.read(len_host).decode("UTF-16BE")
         port = self.read("i")
-        return Event("connect_16", [ping_host, protocol, hostname, port])
+        return Connect16Event("connect_16", protocol, hostname, port)
 
     def decode_handshake(self):
-        self.protocol = self.read_varint()
+        protocol = self.read_varint()
+        if protocol in ServerCore.supported_protocols():
+            self.protocol = protocol
+        else:
+            raise Exception("Invalid protocol")
         hostname = self.read_string()
         port = self.read("H")
         self.status = self.read_varint()
-        return Event("handshake", [hostname, port])
+        return HandshakeEvent("handshake", hostname, port)
 
     def decode_status(self):
-        return Event("status", None)
+        return StatusEvent("status")
 
     def decode_ping(self):
-        return Event("ping", self.read("q"))
+        return PingEvent("ping", self.read("q"))
+
+    def decode_start_login(self):
+        return LoginStartEvent("login_start", self.read_string())
+
+    def decode_encryption(self):
+        secret = decrypt_secret(ServerCore.keypair,
+                                self.buffer.read(self.read_varint()))
+        verify = decrypt_secret(ServerCore.keypair,
+                                self.buffer.read(self.read_varint()))
+        return ConfirmEncryptionEvent("login_encryption", secret, verify)

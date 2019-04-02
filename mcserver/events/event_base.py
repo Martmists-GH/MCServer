@@ -1,15 +1,17 @@
+from __future__ import annotations
+
 # Stdlib
-from abc import ABC
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from mcserver.classes.client_connection import ClientConnection
 
 
-class Event(ABC):
-    def __init__(self, event_name: str, args: Any):
-        self.event = event_name
-        if not isinstance(args, tuple):
-            args = tuple(args) if isinstance(args, list) else (args, )
+class Event:
+    def __init__(self, event: str, *args):
+        self.event = event
         self.args = args
-        self._conn = None
+        self._conn: ClientConnection = None
 
     def __repr__(self):
-        return f"Event(name={self.event}, args={self.args})"
+        return f"{self.__class__.__name__}({', '.join(map(repr, self.args))})"

@@ -15,6 +15,7 @@ from quarry.data import packets
 # MCServer
 from mcserver.classes.packet_decoder import PacketDecoder
 from mcserver.classes.packet_encoder import PacketEncoder
+from mcserver.events.play import PlayerLeaveEvent
 from mcserver.objects.event_handler import EventHandler
 from mcserver.objects.player_registry import PlayerRegistry
 from mcserver.utils.cryptography import make_server_id, make_verify_token, Cipher
@@ -32,6 +33,7 @@ class ClientConnection:
         # TODO:
         # Refactor this class properties to delegate as much as possible to a different class
         # This class should only handle incoming/outgoing data and triggering events
+        self.address = client._socket.getsockname()[0]
         self.client = client
         self.do_loop = True
         self.packet_decoder = PacketDecoder(packets.default_protocol_version, 0)
@@ -103,7 +105,7 @@ class ClientConnection:
                 try:
                     rest_bytes, event = self.packet_decoder.decode(data)
                     event._conn = self
-                    debug(f"Left after parsing: {rest_bytes}")
+                    # debug(f"Left after parsing: {rest_bytes}")
                 except AssertionError:
                     run_again = False
                     continue
@@ -131,7 +133,7 @@ class ClientConnection:
             if self.packet_decoder.status == 3:
                 # User was logged in
                 debug("Player left, removing from game...")
-                await EventHandler.handle_event(MCEvent("player_leave", self.player))  # TODO: Use PlayerLeaveEvent
+                await EventHandler.handle_event(PlayerLeaveEvent("player_leave", self.player))  # TODO: Use PlayerLeaveEvent
                 PlayerRegistry.players.remove(self.player)
 
     async def handle_msg(self, event: MCEvent):

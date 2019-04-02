@@ -48,6 +48,6 @@ class ServerCore:
     @classmethod
     def run(cls):
         try:
-            run(cls.start, backend="asyncio")
+            run(cls.start, backend="curio")
         except KeyboardInterrupt:
             pass
