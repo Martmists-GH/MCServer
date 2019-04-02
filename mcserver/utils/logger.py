@@ -1,9 +1,11 @@
 # Stdlib
-from logging import DEBUG, getLogger
+from logging import DEBUG, getLogger, basicConfig
 from typing import Union
 
+basicConfig(level=DEBUG)
 log = getLogger("MC-Server")
 log.setLevel(DEBUG)
+log.info("Logger ready")
 
 
 def info(data: Union[str, bytes]):
@@ -11,7 +13,7 @@ def info(data: Union[str, bytes]):
 
 
 def debug(data: Union[str, bytes]):
-    log.debug(data)
+    log.error(data)
 
 
 def warn(data: Union[str, bytes]):

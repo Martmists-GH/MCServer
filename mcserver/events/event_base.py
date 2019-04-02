@@ -12,4 +12,4 @@ class Event(ABC):
         self._conn = None
 
     def __repr__(self):
-        return f"Event(name={self.event}, args={self.args}"
+        return f"Event(name={self.event}, args={self.args})"

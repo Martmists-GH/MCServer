@@ -6,7 +6,12 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 # MCServer
+from quarry.data import packets
+
 from mcserver.events.event_base import Event
+from mcserver.objects.player_registry import PlayerRegistry
+from mcserver.objects.server_core import ServerCore
+from mcserver.utils.misc import read_favicon
 
 if TYPE_CHECKING:
     from typing import List, Callable, Dict, Optional
@@ -39,7 +44,7 @@ class EventHandler:
     listeners: Dict[str, List[Callable]] = {
         key: []
         for key in (
-            "player_join", "player_leave", ...
+            "event_handshake", "event_status", "event_connect_16", "event_ping"
         )
     }
 
@@ -58,6 +63,32 @@ class EventHandler:
         pass
 
     @classmethod
-    async def event_status(cls, evt: Event):
-        # evt._conn.send_packet("status", {...})
+    async def event_connect_16(cls, evt: Event):
         pass
+
+    @classmethod
+    async def event_status(cls, evt: Event):
+        data = {
+            "description": {
+                "text": ServerCore.options["motd"]
+            },
+            "players": {
+                "online": PlayerRegistry.player_count(),
+                "max": ServerCore.options["max-players"]
+            },
+            "version": {
+                "name": packets.minecraft_versions.get(
+                    evt._conn.protocol_version,
+                    "???"),
+                "protocol": evt._conn.protocol_version,
+            }
+        }
+        favicon = read_favicon()
+        if favicon:
+            data["favicon"] = f"data:image/png;base64,{favicon}"
+
+        evt._conn.send_packet("status", data)
+
+    @classmethod
+    async def event_ping(cls, evt: Event):
+        evt._conn.send_packet("pong", evt.args[0])

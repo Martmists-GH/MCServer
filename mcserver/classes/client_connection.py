@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 # Stdlib
+import traceback
 from traceback import format_exc
 from typing import TYPE_CHECKING, Any, Tuple
 from uuid import UUID
@@ -13,7 +14,7 @@ from quarry.data import packets
 
 # MCServer
 from mcserver.classes.packet_decoder import PacketDecoder
-# from mcserver.classes.packet_encoder import PacketEncoder
+from mcserver.classes.packet_encoder import PacketEncoder
 from mcserver.objects.event_handler import EventHandler
 from mcserver.objects.player_registry import PlayerRegistry
 from mcserver.utils.cryptography import make_server_id, make_verify_token, Cipher
@@ -33,9 +34,7 @@ class ClientConnection:
         # This class should only handle incoming/outgoing data and triggering events
         self.client = client
         self.do_loop = True
-        self.protocol_state = "init"
-        self.protocol_version = packets.default_protocol_version
-        self.packet_decoder = PacketDecoder(self.protocol_version, 0)
+        self.packet_decoder = PacketDecoder(packets.default_protocol_version, 0)
         self.messages: List[bytes] = []
         self._locks: List[
             Dict[str,
@@ -57,9 +56,16 @@ class ClientConnection:
         return PlayerRegistry.get_player(self.uuid)
 
     @property
+    def protocol_version(self) -> int:
+        return self.packet_decoder.protocol
+
+    @property
+    def protocol_state(self) -> int:
+        return self.packet_decoder.status
+
+    @property
     def packet_encoder(self):
-        # TODO: Implement class
-        return PacketEncoder(self.protocol_version)
+        return PacketEncoder(self.packet_decoder.protocol)
 
     def __repr__(self):
         return (f"ClientConnection(loop={self.do_loop}, "
@@ -76,6 +82,7 @@ class ClientConnection:
         run_again = False
         async with create_task_group() as tg:
             while self.do_loop:
+                await sleep(0.0001)
                 if not run_again:
                     try:
                         line = await self.client.receive_some(1024)
@@ -95,6 +102,8 @@ class ClientConnection:
 
                 try:
                     rest_bytes, event = self.packet_decoder.decode(data)
+                    event._conn = self
+                    debug(f"Left after parsing: {rest_bytes}")
                 except AssertionError:
                     run_again = False
                     continue
@@ -103,7 +112,7 @@ class ClientConnection:
                     if data != b"":
                         run_again = True
 
-                print(event)
+                debug(event)
 
                 for lock in self._locks:
                     if lock["name"] == event.event:
@@ -115,11 +124,11 @@ class ClientConnection:
                 if event.event == "handshake":
                     await self.handle_msg(event)
                 else:
-                    tg.spawn(self.handle_msg, event)
+                    await tg.spawn(self.handle_msg, event)
 
             for lock in self._locks:
                 await lock["lock"].set()
-            if self.protocol_state == "play":
+            if self.packet_decoder.status == 3:
                 # User was logged in
                 debug("Player left, removing from game...")
                 await EventHandler.handle_event(MCEvent("player_leave", self.player))  # TODO: Use PlayerLeaveEvent
@@ -152,5 +161,9 @@ class ClientConnection:
 
         return lock["result"]
 
-    def send_packet(self, packet: bytes):
-        self.messages.append(self.cipher.encrypt(packet))
+    def send_packet(self, packet_name: str, *args):
+        self.messages.append(
+            self.cipher.encrypt(
+                self.packet_encoder.encode(packet_name, args)
+            )
+        )
