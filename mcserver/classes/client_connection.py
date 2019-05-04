@@ -133,8 +133,7 @@ class ClientConnection:
             if self.packet_decoder.status == 3:
                 # User was logged in
                 debug("Player left, removing from game...")
-                await EventHandler.handle_event(PlayerLeaveEvent("player_leave", self.player))  # TODO: Use PlayerLeaveEvent
-                PlayerRegistry.players.remove(self.player)
+                await EventHandler.handle_event(PlayerLeaveEvent("player_leave", self.player))
 
     async def handle_msg(self, event: MCEvent):
         try:

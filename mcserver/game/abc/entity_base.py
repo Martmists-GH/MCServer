@@ -15,10 +15,18 @@ class Spawnable(ABC):
         self.dimension = 0
 
 
+class Look:
+    def __init__(self, xyz: list = (0, 0, 0), pitchyaw: list = (0, 0), relative=0):
+        self.xyz = np.array([*xyz])  # Dumb var names will probably change dunno what else atm though
+        self.pitchyaw = np.array([*pitchyaw])
+        self.relative = relative
+
+
 class EntityBase(Spawnable):
     def __init__(self):
         super().__init__()
         self.rotation = np.array([0, 0])
+        self.look = Look()
         self.metadata = {}
         self.flags = 0
 

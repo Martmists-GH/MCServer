@@ -17,11 +17,13 @@ from mcserver.events.event_base import Event
 from mcserver.events.init import HandshakeEvent
 from mcserver.events.login import LoginStartEvent, ConfirmEncryptionEvent
 from mcserver.events.status import Connect16Event, StatusEvent, PingEvent
+from mcserver.events.play import PlayerLeaveEvent
 from mcserver.objects.player_registry import PlayerRegistry
 from mcserver.objects.server_core import ServerCore
 from mcserver.utils.cryptography import make_digest
 from mcserver.utils.logger import info
 from mcserver.utils.misc import read_favicon
+from mcserver.game.abc.entity_base import Look
 
 if TYPE_CHECKING:
     from typing import List, Callable, Dict, Optional
@@ -29,7 +31,6 @@ if TYPE_CHECKING:
 
 def event(event_name: Optional[str] = None):
     def decorator(func: Callable):
-
         _event = event_name or func.__name__
 
         @wraps
@@ -43,6 +44,7 @@ def event(event_name: Optional[str] = None):
         EventHandler.listeners[_event].append(_event)
 
         return inner
+
     return decorator
 
 
@@ -55,7 +57,7 @@ class EventHandler:
         key: []
         for key in (
             "event_handshake", "event_status", "event_connect_16", "event_ping", "event_login_start",
-            "event_login_encryption"
+            "event_login_encryption", "event_player_leave"
         )
     }
 
@@ -145,4 +147,25 @@ class EventHandler:
             evt._conn.uuid = UUID(data["id"])
 
         evt._conn.packet_decoder.status = 3
+
+        await cls.login_success(evt._conn, evt._conn.uuid, evt._conn.name)  # Init complete. TODO: Switch to play mode
+
         return PlayerRegistry.add_player(evt._conn)
+
+    @classmethod
+    async def login_success(cls, conn, *args):
+        # This is not an event. This might get moved or something
+        conn.packet_decoder.status = 3  # Set the connection to the play state
+        conn.send_packet("login_success", *args)
+
+        # A lot of these are placeholder content
+
+        conn.send_packet("join_game", 0, 0, 0, 0, 20, "default", False)
+        conn.send_packet("spawn_position", [0, 63, 0])
+        d = {"Invulnerable": False, "Flying": False, "Allow Flying": True, "Instant Break": True}
+        conn.send_packet("player_abilities", d, 0.05, 0.1)
+        conn.send_packet("player_pos_and_look", Look(), 0)
+
+    @classmethod
+    async def event_player_leave(cls, evt: PlayerLeaveEvent):
+        PlayerRegistry.players.remove(evt.player)

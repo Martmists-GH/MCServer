@@ -15,9 +15,9 @@ class ServerCore:
     # Refactor auth in a different object
     auth_timeout = 30
     options = DEFAULT_SERVER_PROPERTIES
-    with open("server.properties") as fp:
-        override = read_config(fp)
-    options.update(override)
+    # with open("server.properties") as fp:
+    #     override = read_config(fp)
+    # options.update(override)
 
     keypair = make_keypair()
     pubkey = export_public_key(keypair)
@@ -48,6 +48,6 @@ class ServerCore:
     @classmethod
     def run(cls):
         try:
-            run(cls.start, backend="curio")
+            run(cls.start, backend="asyncio")
         except KeyboardInterrupt:
             pass
